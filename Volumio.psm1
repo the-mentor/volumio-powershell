@@ -5,7 +5,7 @@ function Connect-VolumioServer {
     
     if((Invoke-RestMethod -Uri "$ServerURL/api/v1/ping") -eq 'pong'){
         $Global:VolumioServerURL = $ServerURL
-        Write-Host 'Connected to Voumio Server'
+        Write-Host 'Connected to Volumio Server'
     }
 }
 
