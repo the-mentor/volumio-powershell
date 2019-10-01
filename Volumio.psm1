@@ -3,8 +3,8 @@ function Connect-VolumioServer {
         [Parameter(Position=0,ValueFromPipeline=$TRUE,Mandatory=$true)]$ServerURL
     )
     
-    if((Invoke-RestMethod -Uri "$($Global:VoumioServerURL)/api/v1/ping") -eq 'pong'){
-        $Global:VoumioServerURL = $ServerURL
+    if((Invoke-RestMethod -Uri "$ServerURL/api/v1/ping") -eq 'pong'){
+        $Global:VolumioServerURL = $ServerURL
         Write-Host 'Connected to Voumio Server'
     }
 }
@@ -51,10 +51,10 @@ function Get-VolumioStats {
     )
 
     if($Collection){
-        Invoke-RestMethod -Uri "$($Global:VoumioServerURL)/api/v1/collectionstats"
+        Invoke-RestMethod -Uri "$($Global:VolumioServerURL)/api/v1/collectionstats"
     }
     else{
-        Invoke-RestMethod -Uri "$($Global:VoumioServerURL)/api/v1/getState"
+        Invoke-RestMethod -Uri "$($Global:VolumioServerURL)/api/v1/getState"
     }
 }
 
@@ -62,7 +62,7 @@ function Get-VolumioZones {
     param (
     )
 
-    (Invoke-RestMethod -Uri "$($Global:VoumioServerURL)/api/v1/getzones").zones
+    (Invoke-RestMethod -Uri "$($Global:VolumioServerURL)/api/v1/getzones").zones
     
 }
 
@@ -70,7 +70,7 @@ function Get-VolumioQueue {
     param (
     )
 
-    (Invoke-RestMethod -Uri "$($Global:VoumioServerURL)/api/v1/getQueue").queue
+    (Invoke-RestMethod -Uri "$($Global:VolumioServerURL)/api/v1/getQueue").queue
 
     
 }
@@ -79,7 +79,7 @@ function Clear-VolumioQueue {
     param (
     )
 
-    Invoke-RestMethod -Uri "$($Global:VoumioServerURL)//api/v1/commands/?cmd=clearQueue"
+    Invoke-RestMethod -Uri "$($Global:VolumioServerURL)//api/v1/commands/?cmd=clearQueue"
 
     
 }
@@ -90,11 +90,11 @@ function Get-VolumioPlaylist {
     )
 
     if($Name){
-        $r = Invoke-RestMethod -Uri "$($Global:VoumioServerURL)/api/v1/listplaylists" # | foreach{$_| Select-Object @{l='PlayListName';e={$_}}} |Where-Object {$_.PlayListName -eq $Name }
+        $r = Invoke-RestMethod -Uri "$($Global:VolumioServerURL)/api/v1/listplaylists" # | foreach{$_| Select-Object @{l='PlayListName';e={$_}}} |Where-Object {$_.PlayListName -eq $Name }
         $r |Where-Object {$_ -eq $Name}
     }
     else{
-        Invoke-RestMethod -Uri "$($Global:VoumioServerURL)/api/v1/listplaylists" #| foreach{$_| Select-Object @{l='PlayListName';e={$_}}}
+        Invoke-RestMethod -Uri "$($Global:VolumioServerURL)/api/v1/listplaylists" #| foreach{$_| Select-Object @{l='PlayListName';e={$_}}}
     }
 }
 
@@ -110,7 +110,7 @@ function Play-VolumioPlaylist {
         $PlayListName = $Name
     }
 
-    Invoke-RestMethod -Uri "$($Global:VoumioServerURL)/api/v1/commands/?cmd=playplaylist&name=$Name"
+    Invoke-RestMethod -Uri "$($Global:VolumioServerURL)/api/v1/commands/?cmd=playplaylist&name=$Name"
     
 }
 
