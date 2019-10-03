@@ -3,9 +3,31 @@ function Connect-VolumioServer {
         [Parameter(Position=0,ValueFromPipeline=$TRUE,Mandatory=$true)]$ServerURL
     )
     
-    if((Invoke-RestMethod -Uri "$ServerURL/api/v1/ping") -eq 'pong'){
+    try{
+        $VolumioPong = Invoke-RestMethod -ErrorAction stop -Uri "$ServerURL/api/v1/ping" 
+    }
+    catch{
+        Write-Error "Volumio Server could not be contacted please check the server URL: $ServerURL"
+    }
+
+    if($VolumioPong -eq 'pong'){
         $Global:VolumioServerURL = $ServerURL
-        Write-Host 'Connected to Volumio Server'
+        Write-Host "Connected to Volumio Server: $Global:VolumioServerURL"
+    }
+
+}
+
+function Test-VolumioServerConnection {
+    if(!$Global:VolumioServerURL){
+        throw 'Please Connect to a Volumio Server using the Connect-VolumioServer command and try again'
+    }
+    else{
+        try{
+            Invoke-RestMethod -Uri "$ServerURL/api/v1/ping"
+        }
+        catch{
+            #TODO add error catch code
+        }
     }
 }
 
@@ -19,6 +41,8 @@ function Invoke-VolumioCommand {
         [switch]$Next,
         [int]$Volume
     )
+
+    Test-VolumioServerConnection
 
     if($TogglePlay){
         $cmd = 'toggle'
@@ -42,13 +66,15 @@ function Invoke-VolumioCommand {
         $cmd = "volume&volume=$Volume"
     }
 
-    Invoke-RestMethod -Uri "http://volumio.local/api/v1/commands/?cmd=$cmd"
+    Invoke-RestMethod -Uri "$Global:VolumioServerURL/api/v1/commands/?cmd=$cmd"
 }
 
 function Get-VolumioStats {
     param (
         [switch]$Collection
     )
+
+    Test-VolumioServerConnection
 
     if($Collection){
         Invoke-RestMethod -Uri "$($Global:VolumioServerURL)/api/v1/collectionstats"
@@ -62,6 +88,8 @@ function Get-VolumioZones {
     param (
     )
 
+    Test-VolumioServerConnection
+
     (Invoke-RestMethod -Uri "$($Global:VolumioServerURL)/api/v1/getzones").zones
     
 }
@@ -69,6 +97,8 @@ function Get-VolumioZones {
 function Get-VolumioQueue {
     param (
     )
+
+    Test-VolumioServerConnection
 
     (Invoke-RestMethod -Uri "$($Global:VolumioServerURL)/api/v1/getQueue").queue
 
@@ -79,6 +109,8 @@ function Clear-VolumioQueue {
     param (
     )
 
+    Test-VolumioServerConnection
+
     Invoke-RestMethod -Uri "$($Global:VolumioServerURL)//api/v1/commands/?cmd=clearQueue"
 
     
@@ -88,6 +120,8 @@ function Get-VolumioPlaylist {
     param(
         $Name
     )
+
+    Test-VolumioServerConnection
 
     if($Name){
         $r = Invoke-RestMethod -Uri "$($Global:VolumioServerURL)/api/v1/listplaylists" # | foreach{$_| Select-Object @{l='PlayListName';e={$_}}} |Where-Object {$_.PlayListName -eq $Name }
@@ -103,6 +137,8 @@ function Play-VolumioPlaylist {
         [Parameter(Position=0,ValueFromPipeline=$TRUE,Mandatory=$true)]$Name
     )
 
+    Test-VolumioServerConnection
+
     if($PlayListName){
         $PlayListName = $Name | Select-Object -ExpandProperty PlayListName
     }
@@ -116,16 +152,11 @@ function Play-VolumioPlaylist {
 
 function Set-VolumioVolume {
     param(
-        [Parameter(Position=0,ValueFromPipeline=$TRUE,Mandatory=$true)][int]$Volume
+        [Parameter(Position=0,ValueFromPipeline=$TRUE,Mandatory=$true)][ValidateRange(1, 100)][int]$Volume
     )
 
-    if($Volume -le 100 -and $Volume -ge 1 ){
-        Invoke-VolumioCommand -Volume $Volume
-    }
-    else {
-        Write-Error "Volume should be a number between 1 and 100"
-    }
-    
-  
+    Test-VolumioServerConnection
+
+    Invoke-VolumioCommand -Volume $Volume
 }
 
